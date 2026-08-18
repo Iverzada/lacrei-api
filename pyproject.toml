@@ -1,0 +1,28 @@
+[project]
+name = "lacrei-api"
+version = "0.1.0"
+description = "API RESTful de gerenciamento de consultas médicas"
+authors = [
+    {name = "Iverson Cintra de Andrade Ferreira"}
+]
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "django (>=6.1,<7.0)",
+    "djangorestframework (>=3.18.0,<4.0.0)",
+    "psycopg[binary] (>=3.3.4,<4.0.0)",
+    "django-cors-headers (>=4.9.0,<5.0.0)",
+    "djangorestframework-simplejwt (>=5.5.1,<6.0.0)",
+    "drf-spectacular (>=0.30.0,<0.31.0)",
+    "django-environ (>=0.14.0,<0.15.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.16.3,<0.17.0)",
+    "coverage (>=7.15.4,<8.0.0)"
+]
