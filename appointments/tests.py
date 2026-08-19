@@ -4,10 +4,12 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
-from .models import Professional
+from professionals.models import Professional
+
+from .models import Appointment
 
 
-class ProfessionalAPITests(APITestCase):
+class AppointmentAPITests(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
@@ -28,8 +30,13 @@ class ProfessionalAPITests(APITestCase):
             contato="gabriela@email.com",
         )
 
-    def test_list_professionals(self):
-        url = reverse("professional-list")
+        self.appointment = Appointment.objects.create(
+            data="2026-08-25T14:30:00-03:00",
+            profissional=self.professional,
+        )
+
+    def test_list_appointments(self):
+        url = reverse("appointment-list")
 
         response = self.client.get(url)
 
@@ -40,14 +47,12 @@ class ProfessionalAPITests(APITestCase):
 
         self.assertEqual(len(response.data), 1)
 
-    def test_create_professional(self):
-        url = reverse("professional-list")
+    def test_create_appointment(self):
+        url = reverse("appointment-list")
 
         data = {
-            "nome_social": "João Silva",
-            "profissao": "Cardiologista",
-            "endereco": "Brasília - DF",
-            "contato": "joao@email.com",
+            "data": "2026-08-26T15:00:00-03:00",
+            "profissional": self.professional.id,
         }
 
         response = self.client.post(
@@ -61,16 +66,15 @@ class ProfessionalAPITests(APITestCase):
             status.HTTP_201_CREATED,
         )
 
-        self.assertTrue(
-            Professional.objects.filter(
-                nome_social="João Silva"
-            ).exists()
+        self.assertEqual(
+            Appointment.objects.count(),
+            2,
         )
 
-    def test_retrieve_professional(self):
+    def test_retrieve_appointment(self):
         url = reverse(
-            "professional-detail",
-            args=[self.professional.id],
+            "appointment-detail",
+            args=[self.appointment.id],
         )
 
         response = self.client.get(url)
@@ -80,22 +84,15 @@ class ProfessionalAPITests(APITestCase):
             status.HTTP_200_OK,
         )
 
-        self.assertEqual(
-            response.data["nome_social"],
-            "Gabriela Silva",
-        )
-
-    def test_update_professional(self):
+    def test_update_appointment(self):
         url = reverse(
-            "professional-detail",
-            args=[self.professional.id],
+            "appointment-detail",
+            args=[self.appointment.id],
         )
 
         data = {
-            "nome_social": "Gabriela Silva",
-            "profissao": "Psicóloga Clínica",
-            "endereco": "Brasília - DF",
-            "contato": "novo@email.com",
+            "data": "2026-08-27T10:00:00-03:00",
+            "profissional": self.professional.id,
         }
 
         response = self.client.put(
@@ -109,21 +106,14 @@ class ProfessionalAPITests(APITestCase):
             status.HTTP_200_OK,
         )
 
-        self.professional.refresh_from_db()
-
-        self.assertEqual(
-            self.professional.profissao,
-            "Psicóloga Clínica",
-        )
-
-    def test_partial_update_professional(self):
+    def test_partial_update_appointment(self):
         url = reverse(
-            "professional-detail",
-            args=[self.professional.id],
+            "appointment-detail",
+            args=[self.appointment.id],
         )
 
         data = {
-            "contato": "alterado@email.com",
+            "data": "2026-08-28T09:00:00-03:00",
         }
 
         response = self.client.patch(
@@ -137,17 +127,10 @@ class ProfessionalAPITests(APITestCase):
             status.HTTP_200_OK,
         )
 
-        self.professional.refresh_from_db()
-
-        self.assertEqual(
-            self.professional.contato,
-            "alterado@email.com",
-        )
-
-    def test_delete_professional(self):
+    def test_delete_appointment(self):
         url = reverse(
-            "professional-detail",
-            args=[self.professional.id],
+            "appointment-detail",
+            args=[self.appointment.id],
         )
 
         response = self.client.delete(url)
@@ -158,16 +141,57 @@ class ProfessionalAPITests(APITestCase):
         )
 
         self.assertFalse(
-            Professional.objects.filter(
-                id=self.professional.id
+            Appointment.objects.filter(
+                id=self.appointment.id
             ).exists()
         )
 
-    def test_create_professional_without_required_fields(self):
-        url = reverse("professional-list")
+    def test_filter_appointments_by_professional(self):
+        url = reverse("appointment-list")
+
+        response = self.client.get(
+            url,
+            {
+                "profissional": self.professional.id,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(len(response.data), 1)
+
+        self.assertEqual(
+            response.data[0]["profissional"],
+            self.professional.id,
+        )
+
+    def test_create_appointment_without_data(self):
+        url = reverse("appointment-list")
 
         data = {
-            "nome_social": "Gabriela",
+            "profissional": self.professional.id,
+        }
+
+        response = self.client.post(
+            url,
+            data,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_create_appointment_invalid_professional(self):
+        url = reverse("appointment-list")
+
+        data = {
+            "data": "2026-08-26T15:00:00-03:00",
+            "profissional": 999999,
         }
 
         response = self.client.post(
@@ -184,7 +208,7 @@ class ProfessionalAPITests(APITestCase):
     def test_access_without_authentication(self):
         self.client.credentials()
 
-        url = reverse("professional-list")
+        url = reverse("appointment-list")
 
         response = self.client.get(url)
 

@@ -1,13 +1,13 @@
 from rest_framework.routers import DefaultRouter
 
-from .views import ProfessionalViewSet
+from .views import AppointmentViewSet
 
 router = DefaultRouter()
 
 router.register(
     "",
-    ProfessionalViewSet,
-    basename="professional",
+    AppointmentViewSet,
+    basename="appointment",
 )
 
 urlpatterns = router.urls

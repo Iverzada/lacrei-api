@@ -5,15 +5,15 @@ from .models import Professional
 
 class ProfessionalSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Professional
-        fields = [
-            "id",
-            "nome_social",
-            "profissao",
-            "endereco",
-            "contato",
-        ]
-        read_only_fields = ["id"]
+       model = Professional
+       fields = (
+        "id",
+        "nome_social",
+        "profissao",
+        "endereco",
+        "contato",
+    )
+    read_only_fields = ("id",)
 
     def validate_nome_social(self, value):
         value = value.strip()

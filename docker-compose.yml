@@ -2,17 +2,31 @@ services:
   db:
     image: postgres:17
     container_name: lacrei-postgres
-
     environment:
       POSTGRES_DB: lacrei
       POSTGRES_USER: lacrei
       POSTGRES_PASSWORD: lacrei123
-
-    ports:
-      - "5432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lacrei -d lacrei"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: lacrei-api
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
