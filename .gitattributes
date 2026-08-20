@@ -1,0 +1,3 @@
+docker-compose.yml export-ignore
+.github export-ignore
+lacrei-staging.zip export-ignore
