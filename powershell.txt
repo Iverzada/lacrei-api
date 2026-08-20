@@ -1,0 +1,21 @@
+Criar o JSON para POST/PUT
+$body = @{ nome_social = "Gabriela Silva"; profissao = "Psicóloga"; endereco = "Brasília - DF"; contato = "gabriela@email.com" } | ConvertTo-Json
+
+GET — listar todos
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/professionals/" -Method Get -Headers @{ Authorization = "Token $token" }
+
+POST — criar profissional
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/professionals/" -Method Post -Headers @{ Authorization = "Token $token" } -ContentType "application/json; charset=utf-8" -Body $bodyUtf8
+
+PUT — substituir todos os dados de ID 
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/professionals/X/" -Method Put -Headers @{ Authorization = "Token $token" } -ContentType "application/json; charset=utf-8" -Body $bodyUtf8
+
+PATCH — alterar somente alguns campos
+$bodyPatch = @{ profissao = "Psicóloga Clínica"; contato = "gabriela.novo@email.com" } | ConvertTo-Json
+
+$bodyPatchUtf8 = [System.Text.Encoding]::UTF8.GetBytes($bodyPatch)
+
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/professionals/X/" -Method Patch -Headers @{ Authorization = "Token $token" } -ContentType "application/json; charset=utf-8" -Body $bodyPatchUtf8
+
+DELETE — excluir ID 
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/professionals/X/" -Method Delete -Headers @{ Authorization = "Token $token" }
