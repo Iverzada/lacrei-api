@@ -5,7 +5,8 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework.authtoken.views import obtain_auth_token
+
+from config.auth import CustomAuthToken
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -39,7 +40,6 @@ urlpatterns = [
     ),
     path(
         "api/v1/auth/token/",
-        obtain_auth_token,
-        name="api-token-auth",
-    ),
+        CustomAuthToken.as_view(),
+        name="api-token-auth",),
 ]

@@ -157,6 +157,24 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API REST para gerenciamento de consultas médicas.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_SETTINGS": """
+    {
+        deepLinking: true,
+        persistAuthorization: true,
+        requestInterceptor: (request) => {
+            if (
+                !request.url.includes("/api/v1/auth/token/") &&
+                request.headers &&
+                request.headers.Authorization &&
+                !request.headers.Authorization.startsWith("Token ")
+            ) {
+                request.headers.Authorization =
+                    "Token " + request.headers.Authorization;
+            }
+            return request;
+        }
+    }
+    """,
 }
 
 LOGGING = {
