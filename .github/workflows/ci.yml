@@ -146,6 +146,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-2
       AWS_REGION: us-east-2
+      EB_PRODUCTION_APPLICATION: lacrei-prod
       EB_PRODUCTION_ENVIRONMENT: lacrei-prod
 
     steps:
@@ -155,6 +156,22 @@ jobs:
           set -euo pipefail
 
           VERSION_LABEL="github-${GITHUB_SHA}"
+
+          BUCKET="$(aws elasticbeanstalk create-storage-location --query 'S3Bucket' --output text)"
+          S3_KEY="lacrei-api/${VERSION_LABEL}.zip"
+
+          VERSION_EXISTS="$(aws elasticbeanstalk describe-application-versions \
+            --application-name "$EB_PRODUCTION_APPLICATION" \
+            --version-label "$VERSION_LABEL" \
+            --query 'length(ApplicationVersions)' \
+            --output text)"
+
+          if [ "$VERSION_EXISTS" = "0" ]; then
+            aws elasticbeanstalk create-application-version \
+              --application-name "$EB_PRODUCTION_APPLICATION" \
+              --version-label "$VERSION_LABEL" \
+              --source-bundle S3Bucket="$BUCKET",S3Key="$S3_KEY"
+          fi
 
           aws elasticbeanstalk update-environment \
             --environment-name "$EB_PRODUCTION_ENVIRONMENT" \
