@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -70,3 +70,107 @@ jobs:
 
       - name: Docker build
         run: docker build -t lacrei-api .
+
+  deploy-staging:
+    name: Deploy staging
+    needs: lint-test-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_REGION: us-east-2
+      EB_APPLICATION: lacrei-api
+      EB_STAGING_ENVIRONMENT: lacrei-amb
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Deploy to staging
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION_LABEL="github-${GITHUB_SHA}"
+
+          git archive --format=zip --output=deploy.zip HEAD
+
+          BUCKET="$(aws elasticbeanstalk create-storage-location --query 'S3Bucket' --output text)"
+          S3_KEY="lacrei-api/${VERSION_LABEL}.zip"
+
+          aws s3 cp deploy.zip "s3://${BUCKET}/${S3_KEY}"
+
+          VERSION_EXISTS="$(aws elasticbeanstalk describe-application-versions \
+            --application-name "$EB_APPLICATION" \
+            --version-label "$VERSION_LABEL" \
+            --query 'length(ApplicationVersions)' \
+            --output text)"
+
+          if [ "$VERSION_EXISTS" = "0" ]; then
+            aws elasticbeanstalk create-application-version \
+              --application-name "$EB_APPLICATION" \
+              --version-label "$VERSION_LABEL" \
+              --source-bundle S3Bucket="$BUCKET",S3Key="$S3_KEY"
+          fi
+
+          aws elasticbeanstalk update-environment \
+            --environment-name "$EB_STAGING_ENVIRONMENT" \
+            --version-label "$VERSION_LABEL"
+
+          aws elasticbeanstalk wait environment-updated \
+            --environment-names "$EB_STAGING_ENVIRONMENT"
+
+          DEPLOYED_VERSION="$(aws elasticbeanstalk describe-environments \
+            --environment-names "$EB_STAGING_ENVIRONMENT" \
+            --query 'Environments[0].VersionLabel' \
+            --output text)"
+
+          if [ "$DEPLOYED_VERSION" != "$VERSION_LABEL" ]; then
+            echo "Staging deployment failed."
+            exit 1
+          fi
+
+          echo "Staging deployed successfully: $VERSION_LABEL"
+
+  deploy-production:
+    name: Deploy production
+    needs: deploy-staging
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_REGION: us-east-2
+      EB_PRODUCTION_ENVIRONMENT: lacrei-prod
+
+    steps:
+      - name: Deploy to production
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION_LABEL="github-${GITHUB_SHA}"
+
+          aws elasticbeanstalk update-environment \
+            --environment-name "$EB_PRODUCTION_ENVIRONMENT" \
+            --version-label "$VERSION_LABEL"
+
+          aws elasticbeanstalk wait environment-updated \
+            --environment-names "$EB_PRODUCTION_ENVIRONMENT"
+
+          DEPLOYED_VERSION="$(aws elasticbeanstalk describe-environments \
+            --environment-names "$EB_PRODUCTION_ENVIRONMENT" \
+            --query 'Environments[0].VersionLabel' \
+            --output text)"
+
+          if [ "$DEPLOYED_VERSION" != "$VERSION_LABEL" ]; then
+            echo "Production deployment failed."
+            exit 1
+          fi
+
+          echo "Production deployed successfully: $VERSION_LABEL"
