@@ -21,6 +21,12 @@ As principais tecnologias utilizadas, seguindo os requisitos do desafio, foram:
 - Coverage
 - Swagger / OpenAPI
 
+## Decisões de implementação
+
+As tecnologias principais foram definidas pelo próprio desafio. Durante a implementação, algumas decisões foram tomadas para manter a solução simples e segura dentro do prazo.
+
+A autenticação utiliza Token Authentication do Django REST Framework, atendendo ao requisito de proteção da API sem adicionar complexidade desnecessária. Staging e produção foram mantidos em ambientes e bancos separados para evitar que testes afetem os dados de produção. As configurações sensíveis são fornecidas por variáveis de ambiente, enquanto o Docker mantém a execução consistente entre desenvolvimento, CI e AWS.
+
 ## Funcionalidades
 
 ### Profissionais
