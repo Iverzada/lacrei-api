@@ -146,7 +146,6 @@ cp .env.example .env
 
 No PowerShell:
 
-```markdown
 ```powershell
 Copy-Item .env.example .env
 ```
