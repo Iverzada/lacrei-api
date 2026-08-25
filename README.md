@@ -66,6 +66,16 @@ Exemplo:
 GET /api/v1/appointments/?profissional=1
 ```
 
+### Regras de agendamento
+
+Para evitar inconsistências, a API aplica algumas regras de negócio às consultas:
+
+- consultas só podem ser agendadas para datas futuras;
+- um mesmo profissional não pode possuir duas consultas no mesmo horário;
+- profissionais diferentes podem possuir consultas no mesmo horário.
+
+A prevenção de conflito é aplicada tanto na validação da API quanto por uma constraint no banco de dados.
+
 ### Autenticação
 
 ```text
@@ -122,11 +132,22 @@ http://127.0.0.1:8000
 
 ## Docker
 
-Também é possível executar o projeto utilizando Docker:
+Também é possível executar o projeto utilizando Docker.
+
+Primeiro, crie o arquivo `.env` a partir do exemplo:
 
 ```bash
+cp .env.example .env
+```
+```bash
+No PowerShell:
+Copy-Item .env.example .env
+```
+```bash
+Depois execute:
 docker compose up --build
 ```
+
 
 A API ficará disponível em:
 
@@ -144,12 +165,29 @@ docker compose down
 
 Os testes foram desenvolvidos utilizando `APITestCase` do Django REST Framework.
 
-Eles cobrem o CRUD de profissionais e consultas, autenticação, filtros e cenários de erro.
+Atualmente a suíte possui 25 testes automatizados, cobrindo:
+
+- CRUD de profissionais;
+- CRUD de consultas;
+- autenticação;
+- filtros por profissional;
+- cenários de erro;
+- validações de nome, profissão, endereço e contato;
+- contatos por e-mail e telefone;
+- bloqueio de consultas no passado;
+- prevenção de conflito de horário;
+- possibilidade de profissionais diferentes utilizarem o mesmo horário.
 
 Para executar:
 
 ```bash
 poetry run python manage.py test
+```
+
+Com Docker:
+
+```bash
+docker compose run --rm --entrypoint python web manage.py test
 ```
 
 Para verificar a cobertura:
@@ -159,9 +197,7 @@ poetry run coverage run --source=professionals,appointments manage.py test
 poetry run coverage report -m
 ```
 
-Durante o desenvolvimento, a cobertura ficou em aproximadamente **97%**.
-
-O pipeline exige pelo menos **90%**.
+O pipeline exige cobertura mínima de 90%.
 
 Para verificar o código com Ruff:
 
@@ -197,9 +233,21 @@ PostgreSQL: AWS RDS
 
 Os bancos de staging e produção são separados e não possuem acesso público.
 
+Mais detalhes sobre os ambientes, o fluxo real de implantação e as evidências de deploy estão disponíveis em:
+
+[Documentação de Deploy](docs/DEPLOYMENT.md)
+
 ## CI/CD
 
 O projeto utiliza GitHub Actions.
+
+O workflow está versionado em:
+
+`.github/workflows/ci.yml`
+
+As execuções podem ser consultadas publicamente em:
+
+https://github.com/Iverzada/lacrei-api/actions
 
 A cada push na branch `main`, o pipeline executa:
 
@@ -242,6 +290,10 @@ aws elasticbeanstalk update-environment \
   --environment-name NOME_DO_AMBIENTE \
   --version-label github-SHA_ESTAVEL
 ```
+
+O procedimento completo de rollback, incluindo identificação da versão estável, comandos AWS CLI e validação pós-rollback, está documentado em:
+
+[Procedimento de Rollback](docs/ROLLBACK.md)
 
 ## Possível integração com Asaas
 

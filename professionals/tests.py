@@ -192,3 +192,78 @@ class ProfessionalAPITests(APITestCase):
             response.status_code,
             status.HTTP_401_UNAUTHORIZED,
         )
+
+    def test_create_professional_with_valid_phone(self):
+        url = reverse("professional-list")
+
+        data = {
+            "nome_social": "João Silva",
+            "profissao": "Cardiologista",
+            "endereco": "Brasília - DF",
+            "contato": "(61) 99999-9999",
+        }
+
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+
+    def test_create_professional_with_invalid_contact(self):
+        url = reverse("professional-list")
+
+        data = {
+            "nome_social": "João Silva",
+            "profissao": "Cardiologista",
+            "endereco": "Brasília - DF",
+            "contato": "contato-invalido",
+        }
+
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertIn("contato", response.data)
+
+    def test_create_professional_with_invalid_address(self):
+        url = reverse("professional-list")
+
+        data = {
+            "nome_social": "João Silva",
+            "profissao": "Cardiologista",
+            "endereco": "123",
+            "contato": "joao@email.com",
+        }
+
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertIn("endereco", response.data)
+
+    def test_create_professional_with_short_name_and_profession(self):
+        url = reverse("professional-list")
+
+        data = {
+            "nome_social": "A",
+            "profissao": "X",
+            "endereco": "Brasília - DF",
+            "contato": "joao@email.com",
+        }
+
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertIn("nome_social", response.data)
+        self.assertIn("profissao", response.data)

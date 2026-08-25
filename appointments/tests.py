@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
@@ -30,8 +33,10 @@ class AppointmentAPITests(APITestCase):
             contato="gabriela@email.com",
         )
 
+        self.future_date = timezone.now() + timedelta(days=1)
+        
         self.appointment = Appointment.objects.create(
-            data="2026-08-25T14:30:00-03:00",
+            data=self.future_date,
             profissional=self.professional,
         )
 
@@ -51,8 +56,8 @@ class AppointmentAPITests(APITestCase):
         url = reverse("appointment-list")
 
         data = {
-            "data": "2026-08-26T15:00:00-03:00",
-            "profissional": self.professional.id,
+             "data": "2026-08-26T15:00:00-03:00",
+             "profissional": self.professional.id,
         }
 
         response = self.client.post(
@@ -91,7 +96,7 @@ class AppointmentAPITests(APITestCase):
         )
 
         data = {
-            "data": "2026-08-27T10:00:00-03:00",
+            "data": timezone.now() + timedelta(days=3),
             "profissional": self.professional.id,
         }
 
@@ -113,8 +118,8 @@ class AppointmentAPITests(APITestCase):
         )
 
         data = {
-            "data": "2026-08-28T09:00:00-03:00",
-        }
+           "data": timezone.now() + timedelta(days=4),
+         }
 
         response = self.client.patch(
             url,
@@ -190,8 +195,8 @@ class AppointmentAPITests(APITestCase):
         url = reverse("appointment-list")
 
         data = {
-            "data": "2026-08-26T15:00:00-03:00",
-            "profissional": 999999,
+             "data": timezone.now() + timedelta(days=2),
+             "profissional": 999999,
         }
 
         response = self.client.post(
@@ -215,4 +220,59 @@ class AppointmentAPITests(APITestCase):
         self.assertEqual(
             response.status_code,
             status.HTTP_401_UNAUTHORIZED,
+        )
+    def test_create_appointment_in_the_past(self):
+        url = reverse("appointment-list")
+
+        data = {
+            "data": timezone.now() - timedelta(days=1),
+            "profissional": self.professional.id,
+        }
+
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertIn("data", response.data)
+
+    def test_create_appointment_with_schedule_conflict(self):
+        url = reverse("appointment-list")
+
+        data = {
+            "data": self.future_date,
+            "profissional": self.professional.id,
+        }
+
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertIn("data", response.data)
+
+    def test_different_professionals_can_use_same_datetime(self):
+        other_professional = Professional.objects.create(
+            nome_social="Marina Souza",
+            profissao="Psiquiatra",
+            endereco="Brasília - DF",
+            contato="marina@email.com",
+        )
+
+        url = reverse("appointment-list")
+
+        data = {
+            "data": self.future_date,
+            "profissional": other_professional.id,
+        }
+
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
         )
