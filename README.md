@@ -139,15 +139,18 @@ Primeiro, crie o arquivo `.env` a partir do exemplo:
 ```bash
 cp .env.example .env
 ```
-```bash
+
 No PowerShell:
+
+```bash
 Copy-Item .env.example .env
 ```
-```bash
+
 Depois execute:
+
+```bash
 docker compose up --build
 ```
-
 
 A API ficará disponível em:
 
