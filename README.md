@@ -117,6 +117,10 @@ poetry install
 
 Crie um `.env` usando o `.env.example` como referência.
 
+Para execução local sem Docker, é necessário ter uma instância do PostgreSQL em execução e configurar no `.env` as credenciais correspondentes.
+
+Para uma configuração mais rápida e reproduzível, recomenda-se utilizar o Docker Compose descrito na seção seguinte.
+
 Depois execute:
 
 ```bash
@@ -142,7 +146,8 @@ cp .env.example .env
 
 No PowerShell:
 
-```bash
+```markdown
+```powershell
 Copy-Item .env.example .env
 ```
 
@@ -274,27 +279,11 @@ Cada versão enviada para a AWS utiliza o SHA do commit no nome, facilitando ide
 
 ## Rollback
 
-O Elastic Beanstalk mantém as versões anteriores da aplicação.
+O Elastic Beanstalk mantém versões anteriores da aplicação, permitindo restaurar uma versão estável caso um novo deploy apresente problemas.
 
-Caso uma nova versão apresente problemas, é possível localizar a última versão estável e implantá-la novamente.
+As versões são identificadas pelo SHA do commit, permitindo relacionar cada deploy ao código correspondente no GitHub.
 
-Como as versões usam o SHA do commit:
-
-```text
-github-<SHA_DO_COMMIT>
-```
-
-é possível relacionar facilmente cada deploy ao código correspondente no GitHub.
-
-O rollback também pode ser feito pela AWS CLI:
-
-```bash
-aws elasticbeanstalk update-environment \
-  --environment-name NOME_DO_AMBIENTE \
-  --version-label github-SHA_ESTAVEL
-```
-
-O procedimento completo de rollback, incluindo identificação da versão estável, comandos AWS CLI e validação pós-rollback, está documentado em:
+O procedimento completo de rollback, incluindo identificação da versão estável, comandos AWS CLI, validação pós-rollback e evidência do teste realizado em staging, está documentado em:
 
 [Procedimento de Rollback](docs/ROLLBACK.md)
 

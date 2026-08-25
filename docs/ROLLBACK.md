@@ -51,6 +51,20 @@ Depois confirme se essa versão existe no Elastic Beanstalk:
 aws elasticbeanstalk describe-application-versions --application-name lacrei-prod --version-labels $versao --query "ApplicationVersions[].VersionLabel" --output table
 ```
 
+O rollback também pode ser feito pela AWS CLI. Primeiro, deve-se definir a versão estável que será restaurada:
+
+Em produção:
+
+```powershell
+aws elasticbeanstalk update-environment --environment-name lacrei-prod --version-label $versao
+```
+
+Em staging:
+
+```powershell
+aws elasticbeanstalk update-environment --environment-name lacrei-amb --version-label $versao
+```
+
 ### Staging
 
 Para verificar a mesma versão em staging:
