@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:17
-    container_name: lacrei-postgres
     environment:
       POSTGRES_DB: lacrei
       POSTGRES_USER: lacrei
@@ -16,7 +15,6 @@ services:
 
   web:
     build: .
-    container_name: lacrei-api
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
     ports:
       - "8000:8000"
