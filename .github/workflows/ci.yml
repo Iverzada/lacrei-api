@@ -96,7 +96,7 @@ jobs:
 
           VERSION_LABEL="github-${GITHUB_SHA}"
 
-          git archive --format=zip --output=deploy.zip HEAD
+          git archive --format=zip --output=deploy.zip HEAD -- . ':(exclude).github' ':(exclude)docker-compose.yml'
 
           BUCKET="$(aws elasticbeanstalk create-storage-location --query 'S3Bucket' --output text)"
           S3_KEY="lacrei-api/${VERSION_LABEL}.zip"
